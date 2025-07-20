@@ -10,7 +10,6 @@
         .loader { border: 8px solid #f3f3f3; border-radius: 50%; width: 60px; height: 60px; animation: spin 2s linear infinite; margin-top: 20px; }
         .manual-link { color: #bbbbbb; text-decoration: underline; margin-top: 30px; cursor: pointer; }
 
-        /* Couleurs des marques */
         .spotify { border-top: 8px solid #1DB954; }
         .youtube { border-top: 8px solid #FF0000; }
         .applemusic { border-top: 8px solid #FA243C; }
@@ -28,53 +27,46 @@
     <a id="manual-link" class="manual-link" style="display: none;">Problème de redirection ? Cliquez ici pour ouvrir dans le navigateur.</a>
 
     <script type="text/javascript">
-        // --- CONFIGURATION DES SERVICES ---
         const config = {
             spotify: {
                 name: "Spotify",
                 className: "spotify",
-                // ID : L'identifiant de la piste (ex: 7BqBn9nzAq8spo5e7cZ0dJ)
                 appUrl: (id) => `spotify://track/${id}`,
                 webUrl: (id) => `https://open.spotify.com/track/${id}`
             },
             youtube: {
                 name: "YouTube",
                 className: "youtube",
-                // ID : L'identifiant de la vidéo (ex: AE3R36-7pxM)
                 appUrl: (id) => `vnd.youtube://${id}`,
                 webUrl: (id) => `https://www.youtube.com/watch?v=${id}`
             },
             applemusic: {
                 name: "Apple Music",
                 className: "applemusic",
-                // ID : Le chemin de l'URL après "music.apple.com/" (ex: fr/album/some-song/123?i=456)
-                appUrl: (id) => `https://music.apple.com/${id}`, // Apple Music utilise des Universal Links, l'OS gère l'ouverture de l'app
+                appUrl: (id) => `https://music.apple.com/${id}`,
                 webUrl: (id) => `https://music.apple.com/${id}`
             },
             deezer: {
                 name: "Deezer",
                 className: "deezer",
-                // ID : Le numéro de la piste (ex: 2443491475)
                 appUrl: (id) => `deezer://track/${id}`,
                 webUrl: (id) => `https://www.deezer.com/track/${id}`
             },
             itunes: {
                 name: "iTunes Store",
                 className: "itunes",
-                 // ID : Similaire à Apple Music, le chemin de l'URL (ex: fr/album/aube/1706686154?i=1706686155)
-                appUrl: (id) => `itms://itunes.apple.com/${id}`, // itms:// est le préfixe pour l'iTunes Store
+                appUrl: (id) => `itms://itunes.apple.com/${id}`,
                 webUrl: (id) => `https://itunes.apple.com/${id}`
             },
             soundcloud: {
                 name: "SoundCloud",
                 className: "soundcloud",
                 // ID : Le chemin artiste/piste (ex: oogasound/aube)
-                appUrl: (id) => `soundcloud://resolve?url=https://soundcloud.com/${id}`,
+                // CORRECTION : On encode l'URL pour la rendre "sûre" en tant que paramètre.
+                appUrl: (id) => `soundcloud://resolve?url=${encodeURIComponent(`https://soundcloud.com/${id}`)}`,
                 webUrl: (id) => `https://soundcloud.com/${id}`
             }
         };
-
-        // --- LOGIQUE DE REDIRECTION (inchangée) ---
 
         const urlParams = new URLSearchParams(window.location.search);
         const service = urlParams.get('service');
