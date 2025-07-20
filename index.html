@@ -6,12 +6,19 @@
     <title>Redirection en cours...</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        p { font-size: 1.2em; }
+        p { font-size: 1.2em; max-width: 90%; }
         .loader { border: 8px solid #f3f3f3; border-radius: 50%; width: 60px; height: 60px; animation: spin 2s linear infinite; margin-top: 20px; }
+        .manual-link { color: #bbbbbb; text-decoration: underline; margin-top: 30px; cursor: pointer; }
+
+        /* Couleurs des marques */
         .spotify { border-top: 8px solid #1DB954; }
         .youtube { border-top: 8px solid #FF0000; }
-        .error { border: 8px solid #FFA500; }
-        .manual-link { color: #bbbbbb; text-decoration: underline; margin-top: 30px; cursor: pointer; }
+        .applemusic { border-top: 8px solid #FA243C; }
+        .deezer { border-top: 8px solid #00D3EC; }
+        .itunes { border-top: 8px solid #A247A8; }
+        .soundcloud { border-top: 8px solid #FF5500; }
+        .error { border-top: 8px solid #FFA500; }
+
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -26,46 +33,67 @@
             spotify: {
                 name: "Spotify",
                 className: "spotify",
+                // ID : L'identifiant de la piste (ex: 7BqBn9nzAq8spo5e7cZ0dJ)
                 appUrl: (id) => `spotify://track/${id}`,
                 webUrl: (id) => `https://open.spotify.com/track/${id}`
             },
             youtube: {
                 name: "YouTube",
                 className: "youtube",
+                // ID : L'identifiant de la vidéo (ex: AE3R36-7pxM)
                 appUrl: (id) => `vnd.youtube://${id}`,
                 webUrl: (id) => `https://www.youtube.com/watch?v=${id}`
+            },
+            applemusic: {
+                name: "Apple Music",
+                className: "applemusic",
+                // ID : Le chemin de l'URL après "music.apple.com/" (ex: fr/album/some-song/123?i=456)
+                appUrl: (id) => `https://music.apple.com/${id}`, // Apple Music utilise des Universal Links, l'OS gère l'ouverture de l'app
+                webUrl: (id) => `https://music.apple.com/${id}`
+            },
+            deezer: {
+                name: "Deezer",
+                className: "deezer",
+                // ID : Le numéro de la piste (ex: 2443491475)
+                appUrl: (id) => `deezer://track/${id}`,
+                webUrl: (id) => `https://www.deezer.com/track/${id}`
+            },
+            itunes: {
+                name: "iTunes Store",
+                className: "itunes",
+                 // ID : Similaire à Apple Music, le chemin de l'URL (ex: fr/album/aube/1706686154?i=1706686155)
+                appUrl: (id) => `itms://itunes.apple.com/${id}`, // itms:// est le préfixe pour l'iTunes Store
+                webUrl: (id) => `https://itunes.apple.com/${id}`
+            },
+            soundcloud: {
+                name: "SoundCloud",
+                className: "soundcloud",
+                // ID : Le chemin artiste/piste (ex: oogasound/aube)
+                appUrl: (id) => `soundcloud://resolve?url=https://soundcloud.com/${id}`,
+                webUrl: (id) => `https://soundcloud.com/${id}`
             }
         };
 
-        // --- LOGIQUE DE REDIRECTION ---
+        // --- LOGIQUE DE REDIRECTION (inchangée) ---
 
-        // NOUVEAU : Récupération dynamique depuis l'URL
         const urlParams = new URLSearchParams(window.location.search);
         const service = urlParams.get('service');
         const contentId = urlParams.get('id');
-
         const currentService = config[service];
 
-        // LOGIQUE AMÉLIORÉE : Redirection plus robuste
         function redirect(appUrl, webUrl) {
             let fallbackTimer;
-
             const handleVisibilityChange = () => {
                 if (document.hidden) {
                     clearTimeout(fallbackTimer);
                     document.removeEventListener("visibilitychange", handleVisibilityChange);
                 }
             };
-            
             document.addEventListener("visibilitychange", handleVisibilityChange);
-
-            // Redirection web de secours
             fallbackTimer = setTimeout(() => {
                 document.removeEventListener("visibilitychange", handleVisibilityChange);
                 window.location.href = webUrl;
             }, 2500);
-
-            // Tentative d'ouverture de l'application
             window.location.href = appUrl;
         }
 
@@ -74,25 +102,21 @@
             const loaderEl = document.getElementById("loader");
             const manualLinkEl = document.getElementById("manual-link");
 
-            // NOUVEAU : Gestion des erreurs
             if (!currentService || !contentId) {
-                messageEl.textContent = "Erreur : Service ou ID manquant dans l'URL.";
+                messageEl.textContent = "Erreur : service ou id manquant. Format : ?service=...&id=...";
                 loaderEl.classList.add("error");
-                return; // On arrête le script ici
+                return;
             }
 
             const appUrl = currentService.appUrl(contentId);
             const webUrl = currentService.webUrl(contentId);
 
-            // Mise à jour de l'interface
             messageEl.innerHTML = `Redirection vers <b>${currentService.name}</b>...`;
             loaderEl.classList.add(currentService.className);
             
-            // Mise à jour du lien de secours
             manualLinkEl.href = webUrl;
             manualLinkEl.style.display = 'block';
 
-            // Lancement de la redirection
             redirect(appUrl, webUrl);
         };
     </script>
