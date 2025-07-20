@@ -11,25 +11,11 @@
         .open-app-btn { display: block; background-color: #1ed760; color: white; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; font-size: 1.2em; margin-bottom: 20px; border: none; cursor: pointer; }
         .open-web-link { color: #bbbbbb; text-decoration: underline; }
         #version-note { position: fixed; bottom: 10px; right: 15px; font-size: 0.7em; color: #444; opacity: 0.5; }
-
-        /* Loader */
-        .loader-container { display: flex; } /* Affiché par défaut */
+        .loader-container { display: flex; }
         #loader-spinner { border: 8px solid #f3f3f3; border-radius: 50%; width: 60px; height: 60px; animation: spin 2s linear infinite; margin-top: 20px; }
-
-        /* Landing Page */
-        #landing-page { display: none; } /* Caché par défaut */
-
-        /* Couleurs */
-        .btn-spotify, .loader-spotify { border-top-color: #1DB954; }
-        .btn-youtube, .loader-youtube { border-top-color: #FF0000; }
-        .btn-applemusic, .loader-applemusic { border-top-color: #FA243C; }
-        .btn-deezer, .loader-deezer { border-top-color: #00D3EC; }
-        .btn-itunes, .loader-itunes { border-top-color: #A247A8; }
-        .btn-soundcloud, .loader-soundcloud { border-top-color: #FF5500; }
-        .btn-deezer { background-color: #00D3EC; color: #121212; }
-        /* Les autres boutons partagent une couleur de fond */
-        .btn-spotify { background-color: #1DB954; } .btn-youtube { background-color: #FF0000; } .btn-applemusic { background-color: #FA243C; } .btn-itunes { background-color: #A247A8; } .btn-soundcloud { background-color: #FF5500; }
-
+        #landing-page { display: none; }
+        .btn-spotify, .loader-spotify { border-top-color: #1DB954; } .btn-youtube, .loader-youtube { border-top-color: #FF0000; } .btn-applemusic, .loader-applemusic { border-top-color: #FA243C; } .btn-deezer, .loader-deezer { border-top-color: #00D3EC; } .btn-itunes, .loader-itunes { border-top-color: #A247A8; } .btn-soundcloud, .loader-soundcloud { border-top-color: #FF5500; }
+        .btn-spotify { background-color: #1DB954; } .btn-youtube { background-color: #FF0000; } .btn-applemusic { background-color: #FA243C; } .btn-itunes { background-color: #A247A8; } .btn-soundcloud { background-color: #FF5500; } .btn-deezer { background-color: #00D3EC; color: #121212; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -47,10 +33,13 @@
         <a id="open-web-link" class="open-web-link" href="#">Continuer sur le site web</a>
     </div>
 
-    <span id="version-note">v1.4</span>
+    <!-- NOUVEAU LIEN CACHÉ POUR LA TENTATIVE AUTOMATIQUE -->
+    <a id="autoclick-link" style="display: none;"></a>
+
+    <span id="version-note">v1.5</span>
 
     <script type="text/javascript">
-        const config = { /* La config reste la même qu'avant */
+        const config = { /* La config ne change pas */
             spotify: { name: "Spotify", className: "spotify", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
             youtube: { name: "YouTube", className: "youtube", icon: "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
             applemusic: { name: "Apple Music", className: "applemusic", icon: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Apple_Music_icon.svg", appUrl: (id) => `https://music.apple.com/${id}`, webUrl: (id) => `https://music.apple.com/${id}` },
@@ -58,37 +47,6 @@
             itunes: { name: "iTunes", className: "itunes", icon: "https://upload.wikimedia.org/wikipedia/commons/5/57/ITunes_logo.svg", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
             soundcloud: { name: "SoundCloud", className: "soundcloud", icon: "https://upload.wikimedia.org/wikipedia/commons/a/a2/SoundCloud_logo.svg", appUrl: (id) => `https://soundcloud.com/${id}`, webUrl: (id) => `https://soundcloud.com/${id}` }
         };
-
-        // --- NOUVELLE LOGIQUE HYBRIDE ---
-        function attemptRedirect(appUrl, webUrl, service) {
-            let fallbackTimer;
-
-            const cleanup = () => {
-                clearTimeout(fallbackTimer);
-                document.removeEventListener("visibilitychange", handleVisibilityChange);
-            };
-
-            const handleVisibilityChange = () => {
-                if (document.hidden) {
-                    cleanup(); // Succès, on nettoie tout
-                }
-            };
-            
-            document.addEventListener("visibilitychange", handleVisibilityChange);
-
-            // Plan B : si après 2.5s on est toujours là, c'est un échec. On affiche la page de choix.
-            fallbackTimer = setTimeout(() => {
-                document.removeEventListener("visibilitychange", handleVisibilityChange); // On nettoie pour être sûr
-
-                // On affiche la page de choix
-                document.getElementById('loader-container').style.display = 'none';
-                document.getElementById('landing-page').style.display = 'flex';
-
-            }, 2500);
-
-            // Plan A : on tente la redirection automatique
-            window.location.href = appUrl;
-        }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -100,19 +58,46 @@
                 document.getElementById('loader-container').innerHTML = "<p>Erreur : service ou id manquant.</p>";
                 return;
             }
-            
-            // On prépare la page de choix (le plan B) en arrière-plan
-            document.getElementById('service-icon').style.backgroundImage = `url(${currentService.icon})`;
-            document.getElementById('open-app-btn').textContent = `Ouvrir dans ${currentService.name}`;
-            document.getElementById('open-app-btn').href = currentService.appUrl(contentId);
-            document.getElementById('open-app-btn').classList.add(`btn-${currentService.className}`);
-            document.getElementById('open-web-link').href = currentService.webUrl(contentId);
 
-            // On personnalise le loader
+            const appUrl = currentService.appUrl(contentId);
+            const webUrl = currentService.webUrl(contentId);
+
+            // --- PRÉPARATION DES ÉLÉMENTS ---
+            // On prépare le plan B (la page de choix)
+            document.getElementById('service-icon').style.backgroundImage = `url(${currentService.icon})`;
+            document.getElementById('open-app-btn').href = appUrl;
+            document.getElementById('open-app-btn').textContent = `Ouvrir dans ${currentService.name}`;
+            document.getElementById('open-app-btn').classList.add(`btn-${currentService.className}`);
+            document.getElementById('open-web-link').href = webUrl;
+            
+            // On prépare le loader
             document.getElementById('loader-spinner').classList.add(`loader-${currentService.className}`);
 
-            // On lance la tentative
-            attemptRedirect(currentService.appUrl(contentId), currentService.webUrl(contentId));
+            // ÉTAPE 1: On prépare un lien invisible pour simuler un vrai clic
+            const autoClickLink = document.getElementById('autoclick-link');
+            autoClickLink.href = appUrl;
+            
+            // --- LOGIQUE DE REDIRECTION FINALE ---
+            let fallbackTimer;
+
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    clearTimeout(fallbackTimer); // Succès, on annule le plan B
+                    document.removeEventListener("visibilitychange", handleVisibilityChange);
+                }
+            };
+            
+            document.addEventListener("visibilitychange", handleVisibilityChange);
+
+            // Plan B : si après 2.5s on est toujours là, on affiche la page de choix.
+            fallbackTimer = setTimeout(() => {
+                document.removeEventListener("visibilitychange", handleVisibilityChange);
+                document.getElementById('loader-container').style.display = 'none';
+                document.getElementById('landing-page').style.display = 'flex';
+            }, 2500);
+
+            // ÉTAPE 2: On simule le clic sur le lien invisible. C'est l'action clé.
+            autoClickLink.click();
         };
     </script>
 </body>
