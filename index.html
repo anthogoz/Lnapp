@@ -5,95 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirection en cours...</title>
     <style>
-        /* --- Base & Typographie --- */
-        :root {
-            --dark-bg: #121212;
-            --card-bg: #1e1e1e;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --accent-color: #1DB954; /* Couleur par défaut */
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--dark-bg);
-            color: var(--text-primary);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        /* --- Conteneur Principal (La Carte) --- */
-        .content-wrapper {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 32px;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            box-sizing: border-box;
-        }
-
-        /* --- Conteneur Flex Vertical --- */
-        .flex-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 24px;
-        }
-
-        /* --- Éléments --- */
-        .message {
-            font-size: 1.2em;
-            line-height: 1.5;
-            color: var(--text-secondary);
-            text-align: center;
-            margin: 0;
-        }
-
+        :root { --dark-bg: #121212; --card-bg: #1e1e1e; --text-primary: #ffffff; --text-secondary: #b3b3b3; --accent-color: #1DB954; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif; background-color: var(--dark-bg); color: var(--text-primary); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .content-wrapper { background-color: var(--card-bg); border-radius: 16px; padding: 32px; width: 100%; max-width: 380px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); box-sizing: border-box; }
+        .flex-container { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+        .message { font-size: 1.2em; line-height: 1.5; color: var(--text-secondary); text-align: center; margin: 0; }
         .message b { color: var(--text-primary); }
-
-        .loader-spinner {
-            border: 6px solid #444;
-            border-top-color: var(--accent-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1.5s linear infinite;
-        }
-
-        /* --- Boutons et Liens --- */
-        .open-app-btn {
-            background-color: var(--accent-color);
-            color: var(--text-primary);
-            width: 100%;
-            padding: 16px;
-            border-radius: 50px;
-            font-weight: bold;
-            text-decoration: none;
-            font-size: 1.1em;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.2s ease, filter 0.2s ease;
-        }
+        .loader-spinner { border: 6px solid #444; border-top-color: var(--accent-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1.5s linear infinite; }
+        .open-app-btn { background-color: var(--accent-color); color: var(--text-primary); width: 100%; padding: 16px; border-radius: 50px; font-weight: bold; text-decoration: none; font-size: 1.1em; text-align: center; border: none; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease; }
         .open-app-btn:hover { transform: scale(1.03); filter: brightness(1.1); }
         .btn-deezer { color: #121212; }
-        
         .open-web-link { color: var(--text-secondary); text-decoration: none; transition: color 0.2s ease; }
         .open-web-link:hover { color: var(--text-primary); text-decoration: underline; }
-
         .hidden { display: none !important; }
         #version-note { position: fixed; bottom: 10px; right: 15px; font-size: 0.7em; color: #444; opacity: 0.8; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
     <div id="main-content" class="content-wrapper">
         <div id="loader-container" class="flex-container">
             <p id="loader-message" class="message">Redirection en cours...</p>
@@ -106,25 +35,23 @@
         </div>
     </div>
 
-    <span id="version-note">v2.2</span>
+    <span id="version-note">v2.3</span>
 
     <script>
         const config = {
             spotify: { name: "Spotify", className: "spotify", method: "protocol", accent: "#1DB954", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
             youtube: { name: "YouTube", className: "youtube", method: "protocol", accent: "#FF0000", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
-            
-            // --- MODIFIÉ ---
+            itunes: { name: "iTunes", className: "itunes", method: "protocol", accent: "#A247A8", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
+
+            // --- SERVICES MODERNES (Universal Links) ---
             deezer: { 
                 name: "Deezer", 
                 className: "deezer", 
-                method: "protocol", 
+                method: "universal",
                 accent: "#00D3EC", 
-                appUrl: (id) => `deezer://album/${id}`, // C'est maintenant "album"
-                webUrl: (id) => `https://www.deezer.com/album/${id}` // C'est maintenant "album"
+                appUrl: (id) => `https://www.deezer.com/album/${id}`,
+                webUrl: (id) => `https://www.deezer.com/album/${id}` 
             },
-            // --- FIN DE LA MODIFICATION ---
-
-            itunes: { name: "iTunes", className: "itunes", method: "protocol", accent: "#A247A8", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
             applemusic: { name: "Apple Music", className: "applemusic", method: "universal", accent: "#FA243C", appUrl: (id) => `https://music.apple.com/${id}`, webUrl: (id) => `https://music.apple.com/${id}` },
             soundcloud: { name: "SoundCloud", className: "soundcloud", method: "universal", accent: "#FF5500", appUrl: (id) => `https://soundcloud.com/${id}`, webUrl: (id) => `https://soundcloud.com/${id}` }
         };
