@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirection en cours...</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        p { font-size: 1.2em; }
+        .loader { border: 8px solid #f3f3f3; border-radius: 50%; width: 60px; height: 60px; animation: spin 2s linear infinite; margin-top: 20px; }
+        .spotify { border-top: 8px solid #1DB954; }
+        .youtube { border-top: 8px solid #FF0000; }
+        .error { border: 8px solid #FFA500; }
+        .manual-link { color: #bbbbbb; text-decoration: underline; margin-top: 30px; cursor: pointer; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <p id="message">Redirection en cours...</p>
+    <div id="loader" class="loader"></div>
+    <a id="manual-link" class="manual-link" style="display: none;">Problème de redirection ? Cliquez ici pour ouvrir dans le navigateur.</a>
+
+    <script type="text/javascript">
+        // --- CONFIGURATION DES SERVICES ---
+        const config = {
+            spotify: {
+                name: "Spotify",
+                className: "spotify",
+                appUrl: (id) => `spotify://track/${id}`,
+                webUrl: (id) => `https://open.spotify.com/track/${id}`
+            },
+            youtube: {
+                name: "YouTube",
+                className: "youtube",
+                appUrl: (id) => `vnd.youtube://${id}`,
+                webUrl: (id) => `https://www.youtube.com/watch?v=${id}`
+            }
+        };
+
+        // --- LOGIQUE DE REDIRECTION ---
+
+        // NOUVEAU : Récupération dynamique depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const service = urlParams.get('service');
+        const contentId = urlParams.get('id');
+
+        const currentService = config[service];
+
+        // LOGIQUE AMÉLIORÉE : Redirection plus robuste
+        function redirect(appUrl, webUrl) {
+            let fallbackTimer;
+
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    clearTimeout(fallbackTimer);
+                    document.removeEventListener("visibilitychange", handleVisibilityChange);
+                }
+            };
+            
+            document.addEventListener("visibilitychange", handleVisibilityChange);
+
+            // Redirection web de secours
+            fallbackTimer = setTimeout(() => {
+                document.removeEventListener("visibilitychange", handleVisibilityChange);
+                window.location.href = webUrl;
+            }, 2500);
+
+            // Tentative d'ouverture de l'application
+            window.location.href = appUrl;
+        }
+
+        window.onload = function() {
+            const messageEl = document.getElementById("message");
+            const loaderEl = document.getElementById("loader");
+            const manualLinkEl = document.getElementById("manual-link");
+
+            // NOUVEAU : Gestion des erreurs
+            if (!currentService || !contentId) {
+                messageEl.textContent = "Erreur : Service ou ID manquant dans l'URL.";
+                loaderEl.classList.add("error");
+                return; // On arrête le script ici
+            }
+
+            const appUrl = currentService.appUrl(contentId);
+            const webUrl = currentService.webUrl(contentId);
+
+            // Mise à jour de l'interface
+            messageEl.innerHTML = `Redirection vers <b>${currentService.name}</b>...`;
+            loaderEl.classList.add(currentService.className);
+            
+            // Mise à jour du lien de secours
+            manualLinkEl.href = webUrl;
+            manualLinkEl.style.display = 'block';
+
+            // Lancement de la redirection
+            redirect(appUrl, webUrl);
+        };
+    </script>
+</body>
+</html>
