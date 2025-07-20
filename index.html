@@ -21,12 +21,12 @@
 </head>
 <body>
     <div id="loader-container" class="container"><p id="loader-message">Redirection en cours...</p><div id="loader-spinner"></div></div>
-    <div id="landing-page" class="container"><div id="service-icon" class="service-icon"></div><p>L'ouverture automatique a échoué.</p><a id="open-app-btn" class="open-app-btn" href="#">Ouvrir dans l'application</a><a id="open-web-link" class="open-web-link" href="#">Continuer sur le site web</a></div>
-    <a id="autoclick-link" style="display: none;"></a>
-    <span id="version-note">v1.7</span>
+    <div id="landing-page" class="container"><div id="service-icon" class="service-icon"></div><p id="landing-message">Ouvrir avec :</p><a id="open-app-btn" class="open-app-btn" href="#">Ouvrir dans l'application</a><a id="open-web-link" class="open-web-link" href="#">Continuer sur le site web</a></div>
+    <!-- Le lien autoclick a été supprimé, il est inutile -->
+    <span id="version-note">v1.8</span>
 
     <script type="text/javascript">
-        const config = {
+        const config = { // Le "method" est maintenant "protocol" ou "universal"
             spotify: { name: "Spotify", className: "spotify", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
             youtube: { name: "YouTube", className: "youtube", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
             deezer: { name: "Deezer", className: "deezer", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Deezer_logo.svg", appUrl: (id) => `deezer://track/${id}`, webUrl: (id) => `https://www.deezer.com/track/${id}` },
@@ -35,10 +35,7 @@
             soundcloud: { name: "SoundCloud", className: "soundcloud", method: "universal", icon: "https://upload.wikimedia.org/wikipedia/commons/a/a2/SoundCloud_logo.svg", appUrl: (id) => `https://soundcloud.com/${id}`, webUrl: (id) => `https://soundcloud.com/${id}` }
         };
 
-        // Fonction pour détecter si l'on est sur mobile
-        function isMobile() {
-            return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        }
+        function isMobile() { return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -46,12 +43,12 @@
             const contentId = urlParams.get('id');
             const currentService = config[service];
 
-            if (!currentService || !contentId) { /* ... gestion d'erreur ... */ return; }
+            if (!currentService || !contentId) { /* ... */ return; }
 
             const appUrl = currentService.appUrl(contentId);
             const webUrl = currentService.webUrl(contentId);
 
-            // Préparation des éléments (loader, page de choix)
+            // Préparation de la page de choix (pour tous les cas)
             document.getElementById('service-icon').style.backgroundImage = `url(${currentService.icon})`;
             document.getElementById('open-app-btn').href = appUrl;
             document.getElementById('open-app-btn').textContent = `Ouvrir dans ${currentService.name}`;
@@ -59,40 +56,33 @@
             document.getElementById('open-web-link').href = webUrl;
             document.getElementById('loader-spinner').classList.add(`loader-${currentService.className}`);
 
-            // --- LOGIQUE FINALE ADAPTATIVE ---
             if (isMobile()) {
-                // --- STRATÉGIE MOBILE (Hybride et robuste) ---
-                document.getElementById('loader-message').textContent = "Tentative d'ouverture de l'application...";
-                let fallbackTimer;
-                const handleVisibilityChange = () => {
-                    if (document.hidden) {
-                        clearTimeout(fallbackTimer);
-                        document.removeEventListener("visibilitychange", handleVisibilityChange);
-                    }
-                };
-                document.addEventListener("visibilitychange", handleVisibilityChange);
-
-                fallbackTimer = setTimeout(() => {
-                    document.removeEventListener("visibilitychange", handleVisibilityChange);
+                if (currentService.method === 'universal') {
+                    // POUR SOUNDCLOUD/APPLE MUSIC SUR MOBILE : On ne tente RIEN, on affiche DIRECTEMENT les choix.
                     document.getElementById('loader-container').style.display = 'none';
                     document.getElementById('landing-page').style.display = 'flex';
-                }, 2500);
-
-                if (currentService.method === 'universal') {
-                    document.getElementById('autoclick-link').href = appUrl;
-                    document.getElementById('autoclick-link').click();
                 } else {
+                    // POUR SPOTIFY/YOUTUBE SUR MOBILE : On tente l'automatique, avec la page de choix en plan B.
+                    document.getElementById('loader-message').textContent = "Tentative d'ouverture de l'application...";
+                    let fallbackTimer;
+                    const handleVisibilityChange = () => {
+                        if (document.hidden) { clearTimeout(fallbackTimer); }
+                    };
+                    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+                    fallbackTimer = setTimeout(() => {
+                        document.getElementById('loader-container').style.display = 'none';
+                        document.getElementById('landing-message').textContent = "L'ouverture automatique a échoué.";
+                        document.getElementById('landing-page').style.display = 'flex';
+                    }, 2500);
+                    
                     window.location.href = appUrl;
                 }
             } else {
-                // --- STRATÉGIE PC (Simple et directe) ---
+                // STRATÉGIE PC : La plus simple, rediriger vers le web après une courte tentative.
                 document.getElementById('loader-message').textContent = "Redirection vers le service...";
-                // Tenter d'ouvrir l'app (au cas où)
                 window.location.href = appUrl;
-                // Rediriger directement vers le site web après un court instant
-                setTimeout(() => {
-                    window.location.href = webUrl;
-                }, 1000);
+                setTimeout(() => { window.location.href = webUrl; }, 1000);
             }
         };
     </script>
