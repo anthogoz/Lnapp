@@ -3,111 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirection en cours...</title>
+    <title>Ouvrir dans...</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        p { font-size: 1.2em; max-width: 90%; }
-        .loader { border: 8px solid #f3f3f3; border-radius: 50%; width: 60px; height: 60px; animation: spin 2s linear infinite; margin-top: 20px; }
-        .manual-link { color: #bbbbbb; text-decoration: underline; margin-top: 30px; cursor: pointer; }
+        .container { display: none; /* Caché par défaut, affiché par JS */ flex-direction: column; align-items: center; }
+        .service-icon { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; background-size: cover; }
+        .open-app-btn { display: block; background-color: #1ed760; color: white; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; font-size: 1.2em; margin-bottom: 20px; border: none; cursor: pointer; }
+        .open-web-link { color: #bbbbbb; text-decoration: underline; }
+        #version-note { position: fixed; bottom: 10px; right: 15px; font-size: 0.7em; color: #444; opacity: 0.5; }
 
-        /* Couleurs des marques */
-        .spotify { border-top: 8px solid #1DB954; }
-        .youtube { border-top: 8px solid #FF0000; }
-        .applemusic { border-top: 8px solid #FA243C; }
-        .deezer { border-top: 8px solid #00D3EC; }
-        .itunes { border-top: 8px solid #A247A8; }
-        .soundcloud { border-top: 8px solid #FF5500; }
-        .error { border-top: 8px solid #FFA500; }
-        
-        /* NOUVEAU : Note de version */
-        #version-note {
-            position: fixed;
-            bottom: 10px;
-            right: 15px;
-            font-size: 0.7em;
-            color: #444; /* Très sombre pour être discret */
-            opacity: 0.5;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Couleurs pour les boutons */
+        .btn-spotify { background-color: #1DB954; }
+        .btn-youtube { background-color: #FF0000; }
+        .btn-applemusic { background-color: #FA243C; }
+        .btn-deezer { background-color: #00D3EC; color: #121212; }
+        .btn-itunes { background-color: #A247A8; }
+        .btn-soundcloud { background-color: #FF5500; }
     </style>
 </head>
 <body>
-    <p id="message">Redirection en cours...</p>
-    <div id="loader" class="loader"></div>
-    <a id="manual-link" class="manual-link" style="display: none;">Problème de redirection ? Cliquez ici pour ouvrir dans le navigateur.</a>
     
-    <!-- NOUVEAU : Témoin de mise à jour -->
-    <span id="version-note"></span>
+    <div id="loader">
+        <p>Chargement...</p>
+    </div>
+
+    <div id="landing-page" class="container">
+        <div id="service-icon" class="service-icon"></div>
+        <a id="open-app-btn" class="open-app-btn" href="#">Ouvrir dans l'application</a>
+        <a id="open-web-link" class="open-web-link" href="#">Continuer sur le site web</a>
+    </div>
+
+    <span id="version-note">v1.3</span>
 
     <script type="text/javascript">
-        // NOUVEAU : Numéro de version
-        const appVersion = "v1.2";
-
-        // --- CONFIGURATION DES SERVICES ---
         const config = {
-            spotify: { name: "Spotify", className: "spotify", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
-            youtube: { name: "YouTube", className: "youtube", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
-            applemusic: { name: "Apple Music", className: "applemusic", appUrl: (id) => `https://music.apple.com/${id}`, webUrl: (id) => `https://music.apple.com/${id}` },
-            deezer: { name: "Deezer", className: "deezer", appUrl: (id) => `deezer://track/${id}`, webUrl: (id) => `https://www.deezer.com/track/${id}` },
-            itunes: { name: "iTunes Store", className: "itunes", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
-            
-            // --- CORRECTION SOUNDCLOUD ---
-            // On utilise l'URL web standard. L'OS s'occupe d'ouvrir l'app (Universal Link).
-            soundcloud: {
-                name: "SoundCloud",
-                className: "soundcloud",
-                appUrl: (id) => `https://soundcloud.com/${id}`,
-                webUrl: (id) => `https://soundcloud.com/${id}`
-            }
+            spotify: { name: "Spotify", className: "btn-spotify", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
+            youtube: { name: "YouTube", className: "btn-youtube", icon: "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
+            applemusic: { name: "Apple Music", className: "btn-applemusic", icon: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Apple_Music_icon.svg", appUrl: (id) => `https://music.apple.com/${id}`, webUrl: (id) => `https://music.apple.com/${id}` },
+            deezer: { name: "Deezer", className: "btn-deezer", icon: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Deezer_logo.svg", appUrl: (id) => `deezer://track/${id}`, webUrl: (id) => `https://www.deezer.com/track/${id}` },
+            itunes: { name: "iTunes", className: "btn-itunes", icon: "https://upload.wikimedia.org/wikipedia/commons/5/57/ITunes_logo.svg", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
+            soundcloud: { name: "SoundCloud", className: "btn-soundcloud", icon: "https://upload.wikimedia.org/wikipedia/commons/a/a2/SoundCloud_logo.svg", appUrl: (id) => `https://soundcloud.com/${id}`, webUrl: (id) => `https://soundcloud.com/${id}` }
         };
 
-        // --- LOGIQUE DE REDIRECTION (inchangée) ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const service = urlParams.get('service');
-        const contentId = urlParams.get('id');
-        const currentService = config[service];
-
-        function redirect(appUrl, webUrl) {
-            let fallbackTimer;
-            const handleVisibilityChange = () => {
-                if (document.hidden) {
-                    clearTimeout(fallbackTimer);
-                    document.removeEventListener("visibilitychange", handleVisibilityChange);
-                }
-            };
-            document.addEventListener("visibilitychange", handleVisibilityChange);
-            fallbackTimer = setTimeout(() => {
-                document.removeEventListener("visibilitychange", handleVisibilityChange);
-                window.location.href = webUrl;
-            }, 2500);
-            window.location.href = appUrl;
-        }
-
         window.onload = function() {
-            // NOUVEAU : Affichage de la version
-            document.getElementById('version-note').textContent = appVersion;
+            const urlParams = new URLSearchParams(window.location.search);
+            const service = urlParams.get('service');
+            const contentId = urlParams.get('id');
+            const currentService = config[service];
 
-            const messageEl = document.getElementById("message");
-            const loaderEl = document.getElementById("loader");
-            const manualLinkEl = document.getElementById("manual-link");
-
+            const loaderEl = document.getElementById('loader');
+            const landingPageEl = document.getElementById('landing-page');
+            
             if (!currentService || !contentId) {
-                messageEl.textContent = "Erreur : service ou id manquant. Format : ?service=...&id=...";
-                loaderEl.classList.add("error");
+                loaderEl.innerHTML = "<p>Erreur : service ou id manquant.</p>";
                 return;
             }
+            
+            // On récupère les éléments de la page
+            const iconEl = document.getElementById('service-icon');
+            const appBtn = document.getElementById('open-app-btn');
+            const webLink = document.getElementById('open-web-link');
 
+            // On calcule les URLs
             const appUrl = currentService.appUrl(contentId);
             const webUrl = currentService.webUrl(contentId);
-
-            messageEl.innerHTML = `Redirection vers <b>${currentService.name}</b>...`;
-            loaderEl.classList.add(currentService.className);
             
-            manualLinkEl.href = webUrl;
-            manualLinkEl.style.display = 'block';
+            // On personnalise la page
+            iconEl.style.backgroundImage = `url(${currentService.icon})`;
+            appBtn.textContent = `Ouvrir dans ${currentService.name}`;
+            appBtn.href = appUrl;
+            appBtn.className += ` ${currentService.className}`; // Ajoute la classe de couleur
+            webLink.href = webUrl;
 
-            redirect(appUrl, webUrl);
+            // On affiche la page et on cache le loader
+            loaderEl.style.display = 'none';
+            landingPageEl.style.display = 'flex';
         };
     </script>
 </body>
