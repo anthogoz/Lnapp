@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirection en cours...</title>
-    <style> /* CSS inchangé */
+    <style> /* CSS Inchangé */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         .container { flex-direction: column; align-items: center; }
         .service-icon { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; background-size: cover; }
@@ -20,23 +20,25 @@
     </style>
 </head>
 <body>
-    <div id="loader-container" class="container"><p>Redirection en cours...</p><div id="loader-spinner"></div></div>
+    <div id="loader-container" class="container"><p id="loader-message">Redirection en cours...</p><div id="loader-spinner"></div></div>
     <div id="landing-page" class="container"><div id="service-icon" class="service-icon"></div><p>L'ouverture automatique a échoué.</p><a id="open-app-btn" class="open-app-btn" href="#">Ouvrir dans l'application</a><a id="open-web-link" class="open-web-link" href="#">Continuer sur le site web</a></div>
     <a id="autoclick-link" style="display: none;"></a>
-    <span id="version-note">v1.6</span>
+    <span id="version-note">v1.7</span>
 
     <script type="text/javascript">
-        // CONFIGURATION AVEC LA MÉTHODE DE REDIRECTION
         const config = {
-            spotify: { name: "Spotify", className: "spotify", method: "protocol", icon: "...", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
-            youtube: { name: "YouTube", className: "youtube", method: "protocol", icon: "...", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
-            deezer: { name: "Deezer", className: "deezer", method: "protocol", icon: "...", appUrl: (id) => `deezer://track/${id}`, webUrl: (id) => `https://www.deezer.com/track/${id}` },
-            itunes: { name: "iTunes", className: "itunes", method: "protocol", icon: "...", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
-
-            applemusic: { name: "Apple Music", className: "applemusic", method: "universal", icon: "...", appUrl: (id) => `https://music.apple.com/${id}`, webUrl: (id) => `https://music.apple.com/${id}` },
-            soundcloud: { name: "SoundCloud", className: "soundcloud", method: "universal", icon: "...", appUrl: (id) => `https://soundcloud.com/${id}`, webUrl: (id) => `https://soundcloud.com/${id}` }
+            spotify: { name: "Spotify", className: "spotify", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg", appUrl: (id) => `spotify://track/${id}`, webUrl: (id) => `https://open.spotify.com/track/${id}` },
+            youtube: { name: "YouTube", className: "youtube", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg", appUrl: (id) => `vnd.youtube://${id}`, webUrl: (id) => `https://www.youtube.com/watch?v=${id}` },
+            deezer: { name: "Deezer", className: "deezer", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Deezer_logo.svg", appUrl: (id) => `deezer://track/${id}`, webUrl: (id) => `https://www.deezer.com/track/${id}` },
+            itunes: { name: "iTunes", className: "itunes", method: "protocol", icon: "https://upload.wikimedia.org/wikipedia/commons/5/57/ITunes_logo.svg", appUrl: (id) => `itms://itunes.apple.com/${id}`, webUrl: (id) => `https://itunes.apple.com/${id}` },
+            applemusic: { name: "Apple Music", className: "applemusic", method: "universal", icon: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Apple_Music_icon.svg", appUrl: (id) => `https://music.apple.com/${id}`, webUrl: (id) => `https://music.apple.com/${id}` },
+            soundcloud: { name: "SoundCloud", className: "soundcloud", method: "universal", icon: "https://upload.wikimedia.org/wikipedia/commons/a/a2/SoundCloud_logo.svg", appUrl: (id) => `https://soundcloud.com/${id}`, webUrl: (id) => `https://soundcloud.com/${id}` }
         };
-        // J'ai simplifié les icones en "..." ici pour la lisibilité, mais vous pouvez garder les vraies URLs.
+
+        // Fonction pour détecter si l'on est sur mobile
+        function isMobile() {
+            return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -49,41 +51,48 @@
             const appUrl = currentService.appUrl(contentId);
             const webUrl = currentService.webUrl(contentId);
 
-            // Préparation des éléments (loader, page de choix) comme avant
-            document.getElementById('service-icon').style.backgroundImage = `url(${currentService.icon.replace(/"/g,"'")})`; // Petite correction pour les icônes
-            document.getElementById('open-app-btn').href = appUrl; /* ... etc ... */
+            // Préparation des éléments (loader, page de choix)
+            document.getElementById('service-icon').style.backgroundImage = `url(${currentService.icon})`;
+            document.getElementById('open-app-btn').href = appUrl;
             document.getElementById('open-app-btn').textContent = `Ouvrir dans ${currentService.name}`;
             document.getElementById('open-app-btn').classList.add(`btn-${currentService.className}`);
             document.getElementById('open-web-link').href = webUrl;
             document.getElementById('loader-spinner').classList.add(`loader-${currentService.className}`);
 
+            // --- LOGIQUE FINALE ADAPTATIVE ---
+            if (isMobile()) {
+                // --- STRATÉGIE MOBILE (Hybride et robuste) ---
+                document.getElementById('loader-message').textContent = "Tentative d'ouverture de l'application...";
+                let fallbackTimer;
+                const handleVisibilityChange = () => {
+                    if (document.hidden) {
+                        clearTimeout(fallbackTimer);
+                        document.removeEventListener("visibilitychange", handleVisibilityChange);
+                    }
+                };
+                document.addEventListener("visibilitychange", handleVisibilityChange);
 
-            // --- LOGIQUE ADAPTATIVE FINALE ---
-            let fallbackTimer;
-            const handleVisibilityChange = () => {
-                if (document.hidden) {
-                    clearTimeout(fallbackTimer);
+                fallbackTimer = setTimeout(() => {
                     document.removeEventListener("visibilitychange", handleVisibilityChange);
+                    document.getElementById('loader-container').style.display = 'none';
+                    document.getElementById('landing-page').style.display = 'flex';
+                }, 2500);
+
+                if (currentService.method === 'universal') {
+                    document.getElementById('autoclick-link').href = appUrl;
+                    document.getElementById('autoclick-link').click();
+                } else {
+                    window.location.href = appUrl;
                 }
-            };
-            document.addEventListener("visibilitychange", handleVisibilityChange);
-
-            // Plan B (identique) : afficher la page de choix si échec
-            fallbackTimer = setTimeout(() => {
-                document.removeEventListener("visibilitychange", handleVisibilityChange);
-                document.getElementById('loader-container').style.display = 'none';
-                document.getElementById('landing-page').style.display = 'flex';
-            }, 2500);
-
-            // Plan A : CHOISIR LA BONNE MÉTHODE
-            if (currentService.method === 'universal') {
-                // Pour SoundCloud, Apple Music : simuler un clic
-                const autoClickLink = document.getElementById('autoclick-link');
-                autoClickLink.href = appUrl;
-                autoClickLink.click();
             } else {
-                // Pour Spotify, YouTube, etc. : redirection directe
+                // --- STRATÉGIE PC (Simple et directe) ---
+                document.getElementById('loader-message').textContent = "Redirection vers le service...";
+                // Tenter d'ouvrir l'app (au cas où)
                 window.location.href = appUrl;
+                // Rediriger directement vers le site web après un court instant
+                setTimeout(() => {
+                    window.location.href = webUrl;
+                }, 1000);
             }
         };
     </script>
